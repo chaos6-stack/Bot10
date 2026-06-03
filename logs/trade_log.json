@@ -765,5 +765,44 @@
         "exit_reason": "Timeout (120 ticks)",
         "ticks_held": 120,
         "spike_detected": false
+    },
+    {
+        "timestamp": "2026-06-03 17:37:25",
+        "trade_id": "1cc9d8a3",
+        "symbol": "BOOM1000",
+        "direction": "BUY",
+        "entry_price": 14136.91,
+        "exit_price": 14135.255,
+        "pnl": -1.66,
+        "balance": 998.34,
+        "exit_reason": "Timeout (120 ticks)",
+        "ticks_held": 120,
+        "spike_detected": false
+    },
+    {
+        "timestamp": "2026-06-03 17:39:26",
+        "trade_id": "934378d0",
+        "symbol": "BOOM1000",
+        "direction": "BUY",
+        "entry_price": 14135.249,
+        "exit_price": 14133.59,
+        "pnl": -1.66,
+        "balance": 996.69,
+        "exit_reason": "Timeout (120 ticks)",
+        "ticks_held": 120,
+        "spike_detected": false
+    },
+    {
+        "timestamp": "2026-06-03 17:41:27",
+        "trade_id": "fa5d1a3d",
+        "symbol": "BOOM1000",
+        "direction": "BUY",
+        "entry_price": 14133.579,
+        "exit_price": 14131.999,
+        "pnl": -1.58,
+        "balance": 995.11,
+        "exit_reason": "Timeout (120 ticks)",
+        "ticks_held": 120,
+        "spike_detected": false
     }
 ]

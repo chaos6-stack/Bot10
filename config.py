@@ -23,44 +23,53 @@ MIN_LOT_SIZE = 0.20
 DEFAULT_LOT_SIZE = 1.0
 
 # --- BOT EXIT PARAMETERS (TICK-BASED EXIT) ---
-# BOOM1000 fires ~1 spike per 1000 ticks. Holding 80 ticks gives a reasonable
-# window while keeping per-trade risk bounded.
 BOOM_EXIT_TICKS = 120
 CRASH_EXIT_TICKS = 120
 
 # --- STOP LOSS / TAKE PROFIT (in price points) ---
-# Exit immediately if trade moves this many points against us.
-# BOOM1000 tick noise is ~0.01-0.20 pts; stop at 2.5 to avoid noise-outs.
 STOP_LOSS_POINTS = 4.0
-# Lock in profits early if spike gives us this many points.
 TAKE_PROFIT_POINTS = 20.0
 
 # --- BASELINE SPIKE STRATEGY HYPERPARAMETERS ---
 TICK_WINDOW_SIZE = 50
 VOLATILITY_COMPRESSION_WINDOW = 20
 VOLATILITY_BOLLINGER_DEV = 1.5
-
-# Spike threshold: a move > 3.0x mean tick change is flagged as a spike.
-# Lowered from 4.5 → 3.0 to catch real BOOM spikes more reliably.
 SPIKE_THRESHOLD_FACTOR = 3.0
 
 # --- ENTRY FILTER THRESHOLDS ---
-# RSI thresholds for entry signals
-RSI_OVERSOLD = 35  # BOOM entry: buy when RSI < 35 (was 30 — too rare)
-RSI_OVERBOUGHT = 58  # CRASH entry: sell when RSI > 65 (was 70 — too rare)
+RSI_OVERSOLD = 35
+RSI_OVERBOUGHT = 58
+SQUEEZE_THRESHOLD = 0.75
+ZSCORE_ENTRY = 0.8
 
-# Squeeze compression ratio threshold (< this = market is coiling)
-SQUEEZE_THRESHOLD = 0.75  # was 0.75 — slightly more generous
+# --- SPIKE CYCLE COUNTER ---
+# BOOM1000 fires ~1 spike per 1000 ticks. We track how many ticks have
+# passed since the last observed spike and use that to scale entry
+# aggressiveness — entering more boldly when a spike is statistically overdue.
+#
+# Zones (as a fraction of SPIKE_CYCLE_LENGTH):
+#   RECOVERY  0.00 – CYCLE_EARLY_ZONE   No entries. Spike just happened;
+#                                        probability has reset to near zero.
+#   BUILDING  CYCLE_EARLY_ZONE – CYCLE_HOT_ZONE   Normal signals apply.
+#   HOT       CYCLE_HOT_ZONE – 1.00    Spike is approaching statistically.
+#                                        Normal signals + relaxed thresholds.
+#   OVERDUE   > 1.00                    Past expected cycle point. Enter
+#                                        even without other confirmations.
+SPIKE_CYCLE_LENGTH = 1000       # ticks between spikes (matches index name)
+CYCLE_EARLY_ZONE = 0.25         # recovery zone ends at 25% of cycle
+CYCLE_HOT_ZONE = 0.70           # hot zone begins at 70% of cycle
 
-# Z-score threshold for squeeze + slope entry
-ZSCORE_ENTRY = 0.8  # was 1.2 — trigger slightly earlier
+# Lot size scaling when a spike is overdue (CYCLE_LOT_SCALING must be True).
+# At cycle_multiplier = 2.0 (furthest overdue) lot size = DEFAULT_LOT_SIZE * 2.0
+CYCLE_LOT_SCALING = True
+CYCLE_MAX_LOT_SCALE = 2.0
 
 # --- RISK MANAGEMENT LIMITS ---
 MAX_DAILY_LOSS = 50.0
 MAX_TRADES_PER_SESSION = 50
-COOLDOWN_AFTER_LOSS_STREAK = 5    # was 3 — allow 5 losses before cooldown
-COOLDOWN_MINUTES = 3              # was 30 — 3-minute breather, not 30
-MAX_DRAWDOWN_PCT = 0.15           # was 0.10 — 15% max drawdown (more room)
+COOLDOWN_AFTER_LOSS_STREAK = 5
+COOLDOWN_MINUTES = 3
+MAX_DRAWDOWN_PCT = 0.15
 
 # --- FILE PATHS FOR LOGGING ---
 LOG_DIR = "logs"

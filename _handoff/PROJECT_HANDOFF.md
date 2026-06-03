@@ -1,5 +1,5 @@
 # AI-Assisted Synth Index Spike Agent — Project Handoff
-**Last updated:** 2026-06-03  
+**Last updated:** 2026-06-03 (Change 007 — Spike Cycle Counter)  
 **Maintained by:** Replit AI Agent  
 **Purpose:** This file is the complete change log and context document. If you are a new AI agent picking up this project, READ THIS FIRST before touching any code.
 
@@ -163,6 +163,52 @@ python backtester.py                   # optimize BOOM1000, asks before applying
 python backtester.py CRASH1000         # optimize a different symbol
 python backtester.py BOOM1000 --apply  # run + auto-apply without prompt
 ```
+
+---
+
+### CHANGE 007 — Spike Cycle Counter
+**Files:** `config.py`, `strategy.py`, `trader.py`, `main.py`  
+**Problem:** The strategy had no awareness of *when* the last spike occurred. It treated every tick identically, ignoring the most important statistical edge available: BOOM1000 fires roughly 1 spike per 1000 ticks, so a position entered at tick 900-since-last-spike has ~3× the spike probability of one entered at tick 100.
+
+**What was built:**
+
+`config.py` — 5 new parameters:
+```python
+SPIKE_CYCLE_LENGTH = 1000    # expected ticks between spikes
+CYCLE_EARLY_ZONE   = 0.25    # 0–25% of cycle: RECOVERY, no entries
+CYCLE_HOT_ZONE     = 0.70    # 70–100% of cycle: HOT, relaxed thresholds
+CYCLE_LOT_SCALING  = True    # enable dynamic lot sizing
+CYCLE_MAX_LOT_SCALE= 2.0     # max lot multiplier (at OVERDUE)
+```
+
+`strategy.py` — `SpikeStrategy` gains:
+- `ticks_since_last_spike` counter (starts at 500 = neutral BUILDING zone on startup)
+- `total_spikes_observed` counter (session stat)
+- `_compute_cycle_state()` → returns `(multiplier, zone_label)`
+- **4 zones with different behaviour:**
+
+| Zone | Ticks since spike | Multiplier | Bot behaviour |
+|---|---|---|---|
+| RECOVERY | 0–250 | 0.10–0.50 | All entries blocked |
+| BUILDING | 250–700 | 0.50–1.00 | Normal signals apply |
+| HOT | 700–1000 | 1.00–1.75 | RSI+Z-score thresholds relaxed by ~10% |
+| OVERDUE | 1000+ | 1.75–2.00 | Signal E fires: enter without other confirmation |
+
+- **When a spike is detected mid-analysis:** counter resets to 0, decision forced to HOLD (the spike is already done, no point entering), zone immediately becomes RECOVERY.
+- **All entry reasons now include zone + tick count** in the log string for easy debugging.
+
+`trader.py` — lot sizing is now dynamic:
+```python
+lot_size = config.DEFAULT_LOT_SIZE * analytics.get("cycle_lot_scale", 1.0)
+```
+In OVERDUE zone with 2.0x scale: a standard 1.0-lot trade becomes 2.0 lots, doubling profit on the spike capture that's statistically imminent.
+
+`main.py` — console output now shows the full cycle state per tick:
+```
+[#  355] Price: 14131.2  RSI: 0.0  Sqz: 0.14  Cycle: 805tk/80% [HOT] 1.38x lots:1.38  Pos: BUY x1.38
+```
+
+**Verified working:** Unit test confirmed all 4 zones produce correct multipliers. Bot is live on BOOM1000 with cycle counter active.
 
 ---
 
