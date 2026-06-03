@@ -23,10 +23,7 @@ class DerivDataStream:
         self.raw_symbol = symbol.upper()
         # Translate symbol to standard Deriv WS API subscription identifiers
         # Deriv symbols typically use "R_BOOM1000" or similar
-        if "R_" not in self.raw_symbol:
-            self.symbol = f"R_{self.raw_symbol}" if self.raw_symbol in ["BOOM1000", "CRASH1000", "BOOM500", "CRASH500"] else self.raw_symbol
-        else:
-            self.symbol = self.raw_symbol
+        self.symbol = self.raw_symbol
             
         self.on_tick_callback = on_tick_callback
         self.ws = None
