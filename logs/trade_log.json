@@ -804,5 +804,18 @@
         "exit_reason": "Timeout (120 ticks)",
         "ticks_held": 120,
         "spike_detected": false
+    },
+    {
+        "timestamp": "2026-06-03 17:44:31",
+        "trade_id": "a289a853",
+        "symbol": "BOOM1000",
+        "direction": "BUY",
+        "entry_price": 14131.27,
+        "exit_price": 14129.512,
+        "pnl": -1.76,
+        "balance": 998.24,
+        "exit_reason": "Timeout (120 ticks)",
+        "ticks_held": 120,
+        "spike_detected": false
     }
 ]
