@@ -1,0 +1,12 @@
+# Python dependencies for Synthetic Index Trading Bot
+# Can be run inside Termux, Pydroid, or local workstation environments.
+
+# WebSocket protocol streaming client
+websocket-client==1.6.1
+
+# Math and statistical helpers (highly recommended for complex indicator expansion)
+# Note: On Termux, raw NumPy/Pandas might require heavy compiling.
+# The bot is designed to run natively using Python's 'math' and list structures if NumPy is omitted!
+# numpy>=1.22.0
+# pandas>=1.4.0
+
