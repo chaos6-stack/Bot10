@@ -25,15 +25,15 @@ DEFAULT_LOT_SIZE = 1.0
 # --- BOT EXIT PARAMETERS (TICK-BASED EXIT) ---
 # BOOM1000 fires ~1 spike per 1000 ticks. Holding 80 ticks gives a reasonable
 # window while keeping per-trade risk bounded.
-BOOM_EXIT_TICKS = 80
-CRASH_EXIT_TICKS = 80
+BOOM_EXIT_TICKS = 120
+CRASH_EXIT_TICKS = 120
 
 # --- STOP LOSS / TAKE PROFIT (in price points) ---
 # Exit immediately if trade moves this many points against us.
 # BOOM1000 tick noise is ~0.01-0.20 pts; stop at 2.5 to avoid noise-outs.
-STOP_LOSS_POINTS = 2.5
+STOP_LOSS_POINTS = 4.0
 # Lock in profits early if spike gives us this many points.
-TAKE_PROFIT_POINTS = 12.0
+TAKE_PROFIT_POINTS = 20.0
 
 # --- BASELINE SPIKE STRATEGY HYPERPARAMETERS ---
 TICK_WINDOW_SIZE = 50
@@ -46,14 +46,14 @@ SPIKE_THRESHOLD_FACTOR = 3.0
 
 # --- ENTRY FILTER THRESHOLDS ---
 # RSI thresholds for entry signals
-RSI_OVERSOLD = 35        # BOOM entry: buy when RSI < 35 (was 30 — too rare)
-RSI_OVERBOUGHT = 65      # CRASH entry: sell when RSI > 65 (was 70 — too rare)
+RSI_OVERSOLD = 35  # BOOM entry: buy when RSI < 35 (was 30 — too rare)
+RSI_OVERBOUGHT = 58  # CRASH entry: sell when RSI > 65 (was 70 — too rare)
 
 # Squeeze compression ratio threshold (< this = market is coiling)
-SQUEEZE_THRESHOLD = 0.80  # was 0.75 — slightly more generous
+SQUEEZE_THRESHOLD = 0.75  # was 0.75 — slightly more generous
 
 # Z-score threshold for squeeze + slope entry
-ZSCORE_ENTRY = 1.0        # was 1.2 — trigger slightly earlier
+ZSCORE_ENTRY = 0.8  # was 1.2 — trigger slightly earlier
 
 # --- RISK MANAGEMENT LIMITS ---
 MAX_DAILY_LOSS = 50.0
