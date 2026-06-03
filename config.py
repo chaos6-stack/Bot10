@@ -7,47 +7,63 @@ Contains general settings, risk controls, and technical parameters for Crash / B
 import os
 
 # --- DERIV API CONNECTION ---
-APP_ID = 1089  # Default trade app ID for public use
-# For real trading, replace with user API token from Deriv portal
+APP_ID = 1089
 DERIV_TOKEN = os.getenv("DERIV_API_TOKEN", "")
 
 # --- TRADING SYMBOLS ---
-# Popular synthetic index symbols:
-# 'BOOM1000' -> 'R_BOOM1000' / 'BOOM1000'
-# 'CRASH1000' -> 'R_CRASH1000' / 'CRASH1000'
-# 'BOOM500' -> 'R_BOOM500' / 'BOOM500'
-# 'CRASH500' -> 'R_CRASH500' / 'CRASH500'
-ACTIVE_SYMBOL = "BOOM1000"  # Options: BOOM1000, CRASH1000, BOOM500, CRASH500
+# BOOM1000 = avg 1 upward spike per 1000 ticks (~16 min)
+# CRASH1000 = avg 1 downward spike per 1000 ticks
+# BOOM500 = avg 1 upward spike per 500 ticks (~8 min)
+# CRASH500 = avg 1 downward spike per 500 ticks
+ACTIVE_SYMBOL = "BOOM1000"
 
 # --- SIMULATION & PAPER TRADING ---
-INITIAL_BALANCE = 1000.0   # USD virtual balance
-MIN_LOT_SIZE = 0.20        # Standard lot sizes on Deriv (0.2 lots for Boom/Crash)
-DEFAULT_LOT_SIZE = 1.0     # Default simulation lot size
+INITIAL_BALANCE = 1000.0
+MIN_LOT_SIZE = 0.20
+DEFAULT_LOT_SIZE = 1.0
 
 # --- BOT EXIT PARAMETERS (TICK-BASED EXIT) ---
-# In Boom/Crash, traders typically exit after N ticks if no spike occurs
-BOOM_EXIT_TICKS = 10       # Hold trade for 10 ticks hoping for a spike, then exit if empty
-CRASH_EXIT_TICKS = 10
+# BOOM1000 fires ~1 spike per 1000 ticks. Holding 80 ticks gives a reasonable
+# window while keeping per-trade risk bounded.
+BOOM_EXIT_TICKS = 80
+CRASH_EXIT_TICKS = 80
+
+# --- STOP LOSS / TAKE PROFIT (in price points) ---
+# Exit immediately if trade moves this many points against us.
+# BOOM1000 tick noise is ~0.01-0.20 pts; stop at 2.5 to avoid noise-outs.
+STOP_LOSS_POINTS = 2.5
+# Lock in profits early if spike gives us this many points.
+TAKE_PROFIT_POINTS = 12.0
 
 # --- BASELINE SPIKE STRATEGY HYPERPARAMETERS ---
-TICK_WINDOW_SIZE = 50      # Historical ticks memory size for calculating metrics
+TICK_WINDOW_SIZE = 50
 VOLATILITY_COMPRESSION_WINDOW = 20
-VOLATILITY_BOLLINGER_DEV = 1.8  # Standard deviation threshold for compression
+VOLATILITY_BOLLINGER_DEV = 1.5
 
-# A spike is a sudden price movement that rises (Boom) or drops (Crash) rapidly.
-# Defining standard spike multiples (deviation multiplier of the current tick range)
-SPIKE_THRESHOLD_FACTOR = 4.5  # If tick change is > this multiple of mean change, it's a spike!
+# Spike threshold: a move > 3.0x mean tick change is flagged as a spike.
+# Lowered from 4.5 → 3.0 to catch real BOOM spikes more reliably.
+SPIKE_THRESHOLD_FACTOR = 3.0
 
-# --- RISK MANAGEMENT LIMITS (CRITICAL CONTROLS) ---
-MAX_DAILY_LOSS = 50.0       # USD maximum allowed daily loss before stopping bot
-MAX_TRADES_PER_SESSION = 20 # Protects against over-trading and loops
-COOLDOWN_AFTER_LOSS_STREAK = 3  # Disable trading for 30 minutes after 3 consecutive losses
-COOLDOWN_MINUTES = 30
-MAX_DRAWDOWN_PCT = 0.10     # Max account drawdown (10%) before hard stop
+# --- ENTRY FILTER THRESHOLDS ---
+# RSI thresholds for entry signals
+RSI_OVERSOLD = 35        # BOOM entry: buy when RSI < 35 (was 30 — too rare)
+RSI_OVERBOUGHT = 65      # CRASH entry: sell when RSI > 65 (was 70 — too rare)
+
+# Squeeze compression ratio threshold (< this = market is coiling)
+SQUEEZE_THRESHOLD = 0.80  # was 0.75 — slightly more generous
+
+# Z-score threshold for squeeze + slope entry
+ZSCORE_ENTRY = 1.0        # was 1.2 — trigger slightly earlier
+
+# --- RISK MANAGEMENT LIMITS ---
+MAX_DAILY_LOSS = 50.0
+MAX_TRADES_PER_SESSION = 50
+COOLDOWN_AFTER_LOSS_STREAK = 5    # was 3 — allow 5 losses before cooldown
+COOLDOWN_MINUTES = 3              # was 30 — 3-minute breather, not 30
+MAX_DRAWDOWN_PCT = 0.15           # was 0.10 — 15% max drawdown (more room)
 
 # --- FILE PATHS FOR LOGGING ---
 LOG_DIR = "logs"
 TRADE_LOG_CSV = os.path.join(LOG_DIR, "trade_log.csv")
 TRADE_LOG_JSON = os.path.join(LOG_DIR, "trade_log.json")
 BOT_METRICS_JSON = os.path.join(LOG_DIR, "bot_metrics.json")
-

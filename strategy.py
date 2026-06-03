@@ -1,7 +1,7 @@
 # strategy.py
 """
 Spike Trading Strategy Engine (Crash/Boom Specifics)
-Implements statistical logic to detect low-volatility price compression 
+Implements statistical logic to detect low-volatility price compression
 and breakout conditions, which signal high probability of spikes.
 """
 
@@ -13,8 +13,6 @@ class SpikeStrategy:
         self.symbol = symbol.upper()
         self.is_boom = "BOOM" in self.symbol
         self.is_crash = "CRASH" in self.symbol
-        
-        # Volatility & Compression limits
         self.spike_threshold_factor = config.SPIKE_THRESHOLD_FACTOR
 
     def analyze_ticks(self, prices: list[float]) -> tuple[str, dict]:
@@ -25,18 +23,14 @@ class SpikeStrategy:
         if len(prices) < config.TICK_WINDOW_SIZE:
             return "HOLD", {"reason": "Warming up tick queue..."}
 
-        # 1. Extract technical indicator parameters using ML Feature module
+        # 1. Extract features
         features = ml_features.extract_all_features(prices, config.TICK_WINDOW_SIZE)
-        current_price = features["current_price"]
-        
-        # Calculate trailing tick-to-tick changes to assess noise level
+
+        # 2. Spike detection on current tick
         tick_changes = [abs(prices[i] - prices[i-1]) for i in range(1, len(prices))]
         avg_tick_change = sum(tick_changes) / len(tick_changes) if tick_changes else 0.0001
-        
-        # Read current tick movement
         last_change = prices[-1] - prices[-2]
-        
-        # 2. Check if a spike is happening *right now* mathematically
+
         is_current_spike = False
         if self.is_boom and last_change > (avg_tick_change * self.spike_threshold_factor):
             is_current_spike = True
@@ -47,52 +41,67 @@ class SpikeStrategy:
         features["avg_tick_change"] = avg_tick_change
         features["last_change"] = last_change
 
-        # 3. Decision Logic - Based on statistical anomalies & coils
-        # In BOOM: Standard strategy is to BUY *before* a spike (e.g. support level, low-volatility squeeze, or RSI oversold)
-        # In CRASH: Standard strategy is to SELL *before* a spike (RSI overbought, high z-score, low-volatility squeeze)
+        # 3. Volatility squeeze check
+        is_squeezed = features["compression_ratio"] < config.SQUEEZE_THRESHOLD
+        features["is_squeezed"] = is_squeezed
+
+        # 4. Consecutive tick direction analysis (energy build-up)
+        # Count recent consecutive down-ticks (for BOOM) — the more, the closer to spike
+        recent = prices[-10:]
+        down_ticks = sum(1 for i in range(1, len(recent)) if recent[i] < recent[i-1])
+        up_ticks = len(recent) - 1 - down_ticks
+        features["recent_down_ticks"] = down_ticks
+        features["recent_up_ticks"] = up_ticks
+
+        # 5. Decision Logic
         decision = "HOLD"
         reason = "Market neutral"
 
-        # Check for Volatility Squeeze (low standard deviation, coiling spring)
-        # If standard dev compression ratio is < 0.70, it is compressed (ready to burst)
-        is_squeezed = features["compression_ratio"] < 0.75
-        features["is_squeezed"] = is_squeezed
-
         if self.is_boom:
-            # We want to BUY.
-            # Enhanced Conditions:
-            # - EMA Slope is turning positive (rounding bottom)
-            # - RSI is oversold
-            # - Micro-volatility is starting to kick in (early spike warning)
-            
             slope_positive = features["ema_slope"] > 0
-            micro_spike_warning = features["micro_std"] > (features["rolling_std_dev"] * 0.8)
+            slope_flat_or_up = features["ema_slope"] >= -0.005  # loosened: allow flat slope
+            micro_spike_warning = features["micro_std"] > (features["rolling_std_dev"] * 0.6)  # was 0.8
 
-            if rsi_oversold := (features["rsi"] < 30):
+            # Signal A: Classic oversold — RSI well below threshold
+            if features["rsi"] < config.RSI_OVERSOLD:
                 decision = "BUY"
-                reason = "Oversold mean-reversion"
-            elif is_squeezed and (features["z_score"] < -1.2) and slope_positive:
+                reason = f"RSI oversold ({features['rsi']:.1f}) — mean reversion expected"
+
+            # Signal B: Volatility squeeze with z-score breakdown and slope turning up
+            elif is_squeezed and (features["z_score"] < -config.ZSCORE_ENTRY) and slope_flat_or_up:
                 decision = "BUY"
-                reason = "Squeeze with positive slope"
+                reason = f"Squeeze coil + Z-score {features['z_score']:.2f} — breakout setup"
+
+            # Signal C: Momentum burst with micro-volatility expanding (early spike warning)
             elif (features["momentum"] > 0) and slope_positive and micro_spike_warning:
                 decision = "BUY"
-                reason = "Momentum breakout confirmed"
-                
-        elif self.is_crash:
-            # We want to SELL (short).
-            slope_negative = features["ema_slope"] < 0
-            micro_spike_warning = features["micro_std"] > (features["rolling_std_dev"] * 0.8)
+                reason = "Momentum + micro-volatility breakout signal"
 
-            if rsi_overbought := (features["rsi"] > 70):
+            # Signal D: Deep downtrend energy build (BOOM-specific: 8 of last 10 ticks down)
+            elif down_ticks >= 8 and is_squeezed:
+                decision = "BUY"
+                reason = f"Energy build-up: {down_ticks}/10 ticks down, squeeze active"
+
+        elif self.is_crash:
+            slope_negative = features["ema_slope"] < 0
+            slope_flat_or_down = features["ema_slope"] <= 0.005
+            micro_spike_warning = features["micro_std"] > (features["rolling_std_dev"] * 0.6)
+
+            if features["rsi"] > config.RSI_OVERBOUGHT:
                 decision = "SELL"
-                reason = "Overbought mean-reversion"
-            elif is_squeezed and (features["z_score"] > 1.2) and slope_negative:
+                reason = f"RSI overbought ({features['rsi']:.1f}) — mean reversion expected"
+
+            elif is_squeezed and (features["z_score"] > config.ZSCORE_ENTRY) and slope_flat_or_down:
                 decision = "SELL"
-                reason = "Squeeze with negative slope"
+                reason = f"Squeeze coil + Z-score {features['z_score']:.2f} — breakdown setup"
+
             elif (features["momentum"] < 0) and slope_negative and micro_spike_warning:
                 decision = "SELL"
-                reason = "Momentum breakout confirmed"
+                reason = "Momentum + micro-volatility breakdown signal"
+
+            elif up_ticks >= 8 and is_squeezed:
+                decision = "SELL"
+                reason = f"Energy build-up: {up_ticks}/10 ticks up, squeeze active"
 
         features["decision_reason"] = reason
         return decision, features
-

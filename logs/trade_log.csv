@@ -41,3 +41,7 @@ timestamp,trade_id,symbol,direction,entry_price,exit_price,pnl,balance,exit_reas
 2026-06-02 16:52:42,42cd266b,BOOM1000,BUY,14064.162,14064.001,-0.16,999.84,Max exit timeout (10 ticks passed),10,False
 2026-06-02 16:52:42,87e797e1,BOOM1000,BUY,14064.0,14063.87,-0.13,999.71,Max exit timeout (10 ticks passed),10,False
 2026-06-02 16:52:42,26b32f4e,BOOM1000,BUY,14063.857,14063.737,-0.12,999.59,Max exit timeout (10 ticks passed),10,False
+2026-06-03 15:45:39,b7b6e7f7,BOOM1000,BUY,14189.999,14189.884,-0.11,999.89,Max exit timeout (10 ticks passed),10,False
+2026-06-03 15:45:50,48f8970d,BOOM1000,BUY,14189.873,14189.745,-0.13,999.76,Max exit timeout (10 ticks passed),10,False
+2026-06-03 15:46:01,d705bad9,BOOM1000,BUY,14189.735,14189.541,-0.19,999.56,Max exit timeout (10 ticks passed),10,False
+2026-06-03 15:56:05,9f8f3461,BOOM1000,BUY,14182.078,14180.955,-1.12,998.88,Timeout (80 ticks),80,False
