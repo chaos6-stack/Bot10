@@ -1,5 +1,5 @@
 # AI-Assisted Synth Index Spike Agent — Project Handoff
-**Last updated:** 2026-06-04 (Changes 008–009 — Bug fixes + Optimizer v2)  
+**Last updated:** 2026-06-04 (Change 010 — Probability Scoring Model + Critical Bug Fixes)  
 **Maintained by:** Replit AI Agent  
 **Purpose:** This file is the complete change log and context document. If you are a new AI agent picking up this project, READ THIS FIRST before touching any code.
 
@@ -278,6 +278,134 @@ CYCLE_MAX_LOT_SCALE       = 2.5    # max 2.5x lot in OVERDUE
 ```
 
 **Key insight:** HOT zone now starts at 600 ticks (was 700). The optimizer found that being aggressive earlier in the cycle — when the spike is only 60% expected — is more profitable than waiting until 70%. Cooldown increased to 60 ticks (was 40) to reduce the frequency of losing trades.
+
+---
+
+### CHANGE 010 — Probability Scoring Model + Four Critical Bug Fixes
+**Date:** 2026-06-04  
+**Files:** `strategy.py`, `ml_features.py`, `evaluator.py`, `backtester.py`, `config.py`
+
+This is the most significant architectural change to date. Driven by the full quantitative audit (audit.py), which proved that RSI, compression, z-score, momentum, and down-ticks all have zero statistically significant predictive power for upcoming spikes (r_pb ≈ 0, p > 0.05 on 250,000 ticks). The only real edge is the spike cycle counter.
+
+---
+
+#### Bug Fix A — EMA Gradient 1-Tick Stale (`ml_features.py`)
+
+**Root cause:** `calculate_ema_gradient()` used `for i in range(3, 0, -1)` with a dead `else prices` branch. Since `i` is always > 0, the "current" EMA was computed on `prices[:-1]` — one tick behind. Signals B and C in the old strategy gated on `ema_slope`, meaning they were making decisions based on stale slope data.
+
+**Fix:** Replaced loop with three explicit slices:
+```python
+ema_two_ago = calculate_ema(prices[:-2], window)
+ema_one_ago = calculate_ema(prices[:-1], window)  # unused but illustrative
+ema_current = calculate_ema(prices,      window)  # now actually current
+slope = (ema_current - ema_two_ago) / 2.0
+```
+
+---
+
+#### Bug Fix B — Live vs Backtest Feature Divergence (`backtester.py`)
+
+**Root cause:** `strategy.py` called `ml_features.extract_all_features()`, but `backtester.py` had its own inline `_extract_features()` function with a different EMA slope implementation. This meant the optimizer was tuning a ghost version of the strategy that didn't match what ran live. Parameters selected by the optimizer applied to the wrong EMA behavior.
+
+**Fix:** Removed all backtester inline math helpers (`_calc_sma`, `_calc_std`, `_calc_rsi`, `_calc_ema`, `_ema_slope`, `_extract_features`). `backtester.py` now calls `ml_features.extract_all_features()` directly — the identical code path used by the live strategy. Live and backtest are now guaranteed to compute the same features.
+
+---
+
+#### Bug Fix C — Evaluator Score Stuck Near 50 (`evaluator.py`)
+
+**Root cause:** The scoring formula added a 50-point base: `return 50 + raw`. With typical BOOM1000 stats (WR=13.5%, PF=0.8), the raw component was only ±5 points. This meant ALL parameter combinations scored between 45–55 — the optimizer was searching through noise, unable to distinguish good from bad parameters. The 26% score drop from Stage 1 to Stage 3 was partly a symptom of this.
+
+**Fix:** Removed the 50-point base entirely. Recalibrated normalisation constants so the range matches realistic achievable values on an 8,000-tick run:
+
+| Component | v1 (broken) | v2 (fixed) |
+|---|---|---|
+| Win Rate | `wr × 40` | `min(wr/0.30, 1) × 50` |
+| Profit Factor | `min(pf/5,1) × 25` | `min(pf/3.0, 1) × 25` |
+| Net Profit | `±1.0 → ±15 (norm ÷500)` | `±1.0 → ±15 (norm ÷150)` |
+| Max Drawdown | `−(dd÷500) × 15` | `−(dd÷300) × 15` |
+| Timeout ratio | `−to × 10` | `−to × 15` |
+| Spike captures | `sc × 5` | `sc × 10` |
+| **Base offset** | **+50 (REMOVED)** | **None** |
+
+Random-entry strategy now scores ~8–12 (was ~50). Good cycle strategy scores ~45–65 (was ~52).
+
+---
+
+#### Bug Fix D — RSI/Z-Score Removed from Optimizer Grid (`backtester.py`)
+
+**Root cause:** `rsi_oversold`, `rsi_overbought`, and `zscore_entry` were in the Stage 1 grid despite the audit proving they have zero predictive power. The optimizer wasted compute sweeping parameters that contributed nothing, and was creating false "best configurations" that happened to luck into a particular RSI value.
+
+**Fix:** Removed `rsi_oversold`, `rsi_overbought`, `zscore_entry` from all grid definitions. Added `entry_score_threshold` and `weight_cycle` as sweepable params instead. Also raised Stage 1 minimum ticks from 1,200 → 4,000 to ensure ≥25 trades per combo (was 8–15, which was luck-dominated).
+
+---
+
+#### New Feature — Probability Scoring Model (`strategy.py` v3)
+
+Replaces the 5-signal `if/elif` cascade with a continuous weighted score.
+
+**Why the old cascade was bad:**
+- `elif` ordering: Signal A almost always fired first (RSI≈0 on BOOM1000 = always true), hiding Signals B–E
+- Signal E (OVERDUE — unconditional, only valid signal) was blocked by Signal A
+- Binary BUY/HOLD output lost signal strength information
+
+**New model:**
+```python
+# Geometric probability of spike on this tick
+cycle_p    = 1.0 - (1.0 - 1/1000) ** ticks_since_spike
+
+# Volatility compression (unproven — low weight)
+compress_p = max(0, (SQUEEZE_THRESHOLD - compression_ratio) / SQUEEZE_THRESHOLD)
+
+# Directional energy (unproven — low weight)  
+energy_p   = min(down_ticks / 10.0, 1.0)   # BOOM; up_ticks for CRASH
+
+# Weighted composite
+score = WEIGHT_CYCLE × cycle_p        # 0.60 — proven
+      + WEIGHT_COMPRESSION × compress_p   # 0.20 — unproven
+      + WEIGHT_ENERGY × energy_p          # 0.20 — unproven
+
+# confidence = how much of the score is cycle-driven (vs unproven signals)
+confidence = (WEIGHT_CYCLE × cycle_p) / score
+```
+
+**Entry rules (replaces all 5 signals):**
+| Zone | Rule |
+|---|---|
+| RECOVERY | Hard block — always HOLD |
+| BUILDING | Enter if `score >= ENTRY_SCORE_THRESHOLD (0.42)` |
+| HOT | Enter if `score >= ENTRY_SCORE_THRESHOLD (0.42)` |
+| OVERDUE | Hard trigger — always BUY/SELL |
+
+**New analytics output (visible in logs):**
+```
+Score 51.3% ≥ 42% threshold | Cycle 847tk (56.8%) Compress 80% Energy 70% [HOT] Conf 66%
+```
+
+**New config params added:**
+```python
+ENTRY_SCORE_THRESHOLD = 0.42   # minimum score to open a trade
+WEIGHT_CYCLE          = 0.60   # proven predictor
+WEIGHT_COMPRESSION    = 0.20   # unproven — keep small
+WEIGHT_ENERGY         = 0.20   # unproven — keep small
+```
+
+---
+
+#### Impact Summary
+
+| Metric | Before (v2) | After (v3) |
+|---|---|---|
+| Active signals | 5 (RSI, squeeze, momentum, energy, OVERDUE) | 3 components in single weighted score |
+| Signal ordering problem | Yes (elif hides OVERDUE behind RSI) | No (all evaluated simultaneously) |
+| EMA slope accuracy | 1 tick stale | Current tick (fixed) |
+| Backtest/live alignment | Divergent (different EMA code) | Identical (shared ml_features module) |
+| Score range for optimizer | 45–55 (near-constant, noise) | 0–100 (calibrated, meaningful) |
+| Optimizer grid size | 3,321 combos × 8–15 trades | 729 combos × 25–50 trades |
+| RSI in optimizer grid | Yes (waste — zero predictive power) | Removed |
+| Confidence score | Not computed | Output on every tick |
+
+**Full update payload for Android brain update:**
+`config.py` + `strategy.py` + `ml_features.py` + `evaluator.py` + `backtester.py`
 
 ---
 

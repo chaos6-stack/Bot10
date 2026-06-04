@@ -1,0 +1,5 @@
+- [Strategy v3 scoring model](strategy-scoring-model.md) — probability score replaced elif cascade; cycle_p dominates at 60% weight; entry at score>=0.42
+- [Audit findings — zero signal edge](audit-findings.md) — RSI, compression, z-score, momentum, down-ticks all r_pb≈0, p>0.05 on 250k ticks; only spike cycle counter has real edge
+- [Backtester/live alignment fix](backtest-alignment.md) — backtester previously had its own _extract_features(); now uses ml_features.extract_all_features() to match live code exactly
+- [Evaluator score calibration](evaluator-calibration.md) — old formula had +50 base making all scores 45-55 (noise); removed base, recalibrated so range is 0-100 meaningful
+- [EMA gradient bug fix](ema-bug.md) — calculate_ema_gradient() had dead `else prices` branch; current EMA was 1 tick stale; fixed with explicit slices

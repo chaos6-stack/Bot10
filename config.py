@@ -42,6 +42,21 @@ RSI_OVERBOUGHT = 58
 SQUEEZE_THRESHOLD = 0.75
 ZSCORE_ENTRY = 0.8
 
+# --- PROBABILITY SCORING MODEL (v3 strategy) ---
+# Minimum composite spike-probability score required to open a trade.
+# Score is a weighted sum of cycle_p + compression_p + energy_p (all 0–1).
+# RECOVERY zone always blocks; OVERDUE zone always triggers (ignores threshold).
+ENTRY_SCORE_THRESHOLD = 0.42
+
+# Component weights — must sum to 1.0.
+# Cycle timing gets dominant weight: it is the ONLY component with proven
+# statistical edge (geometric distribution of inter-spike intervals).
+# Unproven components (compression, energy) kept small so they can never
+# override cycle timing on their own.
+WEIGHT_CYCLE       = 0.60   # geometric spike probability — proven predictor
+WEIGHT_COMPRESSION = 0.20   # volatility squeeze       — unproven (audit p=0.169)
+WEIGHT_ENERGY      = 0.20   # down/up tick count       — unproven (audit p=0.635)
+
 # --- SPIKE CYCLE COUNTER ---
 # BOOM1000 fires ~1 spike per 1000 ticks. We track how many ticks have
 # passed since the last observed spike and use that to scale entry
