@@ -1,6 +1,6 @@
 # config.py
 """
-Synthetic Indices Trading Agent Configuration Module
+Synthetic Indices Trading Agent Configration Module
 Contains general settings, risk controls, and technical parameters for Crash / Boom markets.
 """
 
@@ -63,6 +63,11 @@ CYCLE_HOT_ZONE = 0.70           # hot zone begins at 70% of cycle
 # At cycle_multiplier = 2.0 (furthest overdue) lot size = DEFAULT_LOT_SIZE * 2.0
 CYCLE_LOT_SCALING = True
 CYCLE_MAX_LOT_SCALE = 2.0
+
+# --- POST-TRADE COOLDOWN ---
+# Minimum ticks to wait after any trade closes before opening a new one.
+# Prevents chasing the same downtrend immediately after a timeout loss.
+POST_TRADE_COOLDOWN_TICKS = 40
 
 # --- RISK MANAGEMENT LIMITS ---
 MAX_DAILY_LOSS = 50.0

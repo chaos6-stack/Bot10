@@ -165,12 +165,17 @@ class SpikeStrategy:
         zs_threshold  = config.ZSCORE_ENTRY  * (0.7 if cycle_zone in ("HOT", "OVERDUE") else 1.0)
 
         if self.is_boom:
-            # Signal A: RSI oversold
-            if features["rsi"] < rsi_threshold:
+            # Signal A: RSI oversold + squeeze confirmation
+            # NOTE: BOOM1000 drifts down between every spike, so RSI is
+            # almost always near 0 (pure downtrend = zero gains). Requiring
+            # squeeze as a second condition filters out the constant drift
+            # and only fires when price is also compressed/coiling.
+            if features["rsi"] < rsi_threshold and (is_squeezed or down_ticks >= 6):
                 decision = "BUY"
                 reason   = (
-                    f"RSI oversold ({features['rsi']:.1f}) [{cycle_zone} zone, "
-                    f"{self.ticks_since_last_spike} ticks]"
+                    f"RSI oversold ({features['rsi']:.1f}) + "
+                    f"{'squeeze' if is_squeezed else f'{down_ticks}/10 down'} "
+                    f"[{cycle_zone} zone, {self.ticks_since_last_spike} ticks]"
                 )
 
             # Signal B: Volatility squeeze + z-score breakdown

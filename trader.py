@@ -26,6 +26,9 @@ class PaperTrader:
         self.max_balance      = self.balance
         self.max_drawdown     = 0.0
 
+        # Post-trade cooldown: prevents immediately re-entering after a close
+        self.ticks_since_last_close = config.POST_TRADE_COOLDOWN_TICKS  # start ready
+
     # ─────────────────────────────────────────────────────────────────────
     #  ENTRY
     # ─────────────────────────────────────────────────────────────────────
@@ -38,7 +41,18 @@ class PaperTrader:
             self._update_active_trade(current_price, analytics)
             return
 
+        # Increment post-trade cooldown counter when flat
+        self.ticks_since_last_close += 1
+
         if decision == "HOLD":
+            return
+
+        # Post-trade cooldown gate
+        if self.ticks_since_last_close < config.POST_TRADE_COOLDOWN_TICKS:
+            remaining = config.POST_TRADE_COOLDOWN_TICKS - self.ticks_since_last_close
+            self.logger.log(
+                f"Cooldown: {remaining} ticks remaining before next entry", "DEBUG"
+            )
             return
 
         # Risk Manager gate
@@ -192,3 +206,4 @@ class PaperTrader:
         )
 
         self.active_trade = None
+        self.ticks_since_last_close = 0   # start post-trade cooldown timer
