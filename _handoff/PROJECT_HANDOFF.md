@@ -1,5 +1,5 @@
 # AI-Assisted Synth Index Spike Agent — Project Handoff
-**Last updated:** 2026-06-03 (Change 007 — Spike Cycle Counter)  
+**Last updated:** 2026-06-04 (Changes 008–009 — Bug fixes + Optimizer v2)  
 **Maintained by:** Replit AI Agent  
 **Purpose:** This file is the complete change log and context document. If you are a new AI agent picking up this project, READ THIS FIRST before touching any code.
 
@@ -209,6 +209,75 @@ In OVERDUE zone with 2.0x scale: a standard 1.0-lot trade becomes 2.0 lots, doub
 ```
 
 **Verified working:** Unit test confirmed all 4 zones produce correct multipliers. Bot is live on BOOM1000 with cycle counter active.
+
+---
+
+### CHANGE 008 — Bug Fixes: RSI Signal + Post-Trade Cooldown
+**Files:** `strategy.py`, `trader.py`, `config.py`
+
+**Bug 1 — RSI always 0.0 (always firing Signal A):**
+BOOM1000 drifts DOWN ~0.07/tick between every spike. In a pure downtrend, avg_gain = 0 → RSI = 0. Since `RSI_OVERSOLD = 35`, the check `0 < 35` was always True, so the bot entered a BUY immediately every time warmup finished — regardless of market conditions.
+
+**Fix:** Signal A now requires a secondary condition:
+```python
+# Before (broken):
+if features["rsi"] < rsi_threshold:
+
+# After (fixed):
+if features["rsi"] < rsi_threshold and (is_squeezed or down_ticks >= 6):
+```
+This prevents entering just because BOOM1000 is in its natural drift. Requires compression OR strong directional momentum as confirmation.
+
+**Bug 2 — Immediate re-entry after every trade close:**
+After a timeout loss, `active_trade` was set to `None` and the very next tick re-entered. This created a "loss → 1 tick wait → loss" death loop.
+
+**Fix:** `POST_TRADE_COOLDOWN_TICKS = 60` added to config. `trader.py` tracks `ticks_since_last_close` and blocks all entries until the counter reaches the threshold. Counter resets to 0 on close, starts at `POST_TRADE_COOLDOWN_TICKS` at startup (so first entry is immediate).
+
+---
+
+### CHANGE 009 — Optimizer v2 (Cycle-Aware 3-Stage Grid Search)
+**Files:** `backtester.py`
+
+**What changed:**
+- `run_backtest()` now simulates ALL live logic: Signal A fix, cooldown, spike cycle counter, RECOVERY zone blocking, HOT/OVERDUE lot scaling, Signal E unconditional entry in OVERDUE
+- 3-stage grid search:
+  - **Stage 1** (972 combos, 2 seeds, 1200 ticks): finds best base params fast
+  - **Stage 2** (top-5 base × 81 cycle combos, 5 seeds, 8000 ticks): sweeps all cycle parameter combinations
+  - **Stage 3** (winner × 8 fresh seeds, 8000 ticks): final validation
+- `apply_params_to_config()` now writes ALL 13 parameters including the 4 new cycle params
+
+**Result of run on 2026-06-04:**
+
+| Metric | Value |
+|---|---|
+| Stage 1 best score | 64.34 |
+| Stage 2 best score | 59.75 |
+| Stage 3 final score | 47.70 |
+| Trades | 207 |
+| Win Rate | 13.5% |
+| Spike Captures | 45.9% |
+| Max Drawdown | $204.57 |
+
+**Optimal parameters applied to config.py:**
+
+```python
+# Base params
+SPIKE_THRESHOLD_FACTOR = 2.5
+RSI_OVERSOLD           = 28
+SQUEEZE_THRESHOLD      = 0.75
+ZSCORE_ENTRY           = 0.8
+BOOM_EXIT_TICKS        = 120
+STOP_LOSS_POINTS       = 2.5
+TAKE_PROFIT_POINTS     = 20.0
+
+# Cycle params (new)
+POST_TRADE_COOLDOWN_TICKS = 60     # wait 60 ticks between trades
+CYCLE_EARLY_ZONE          = 0.15   # RECOVERY ends at 150 ticks
+CYCLE_HOT_ZONE            = 0.60   # HOT begins at 600 ticks (earlier than before)
+CYCLE_MAX_LOT_SCALE       = 2.5    # max 2.5x lot in OVERDUE
+```
+
+**Key insight:** HOT zone now starts at 600 ticks (was 700). The optimizer found that being aggressive earlier in the cycle — when the spike is only 60% expected — is more profitable than waiting until 70%. Cooldown increased to 60 ticks (was 40) to reduce the frequency of losing trades.
 
 ---
 

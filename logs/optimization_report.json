@@ -1,168 +1,215 @@
 {
-    "timestamp": "2026-06-03 16:08:50",
+    "timestamp": "2026-06-04 08:03:24",
+    "optimizer_version": "v2-cycle-aware",
     "symbol": "BOOM1000",
-    "best_score": 31.69,
+    "best_score": 47.7,
+    "stage1_best": 64.34,
+    "stage2_best": 59.75,
     "best_params": {
-        "spike_threshold": 3.0,
-        "rsi_oversold": 35,
+        "spike_threshold": 2.5,
+        "rsi_oversold": 28,
         "rsi_overbought": 58,
         "squeeze_threshold": 0.75,
         "zscore_entry": 0.8,
         "exit_ticks": 120,
-        "stop_loss_points": 4.0,
-        "take_profit_points": 20.0
+        "stop_loss_points": 2.5,
+        "take_profit_points": 20.0,
+        "cooldown_ticks": 60,
+        "cycle_early_zone": 0.15,
+        "cycle_hot_zone": 0.6,
+        "cycle_max_lot_scale": 2.5
     },
     "performance_report": {
-        "total_trades": 440,
-        "win_rate": 0.1318,
-        "net_profit": -428.86,
-        "profit_factor": 0.65,
-        "max_drawdown": 428.86,
-        "avg_ticks_held": 86.2,
-        "timeout_ratio": 0.25,
-        "spike_capture_ratio": 0.2818,
-        "loss_streak": 43,
-        "score": 31.69
+        "total_trades": 207,
+        "win_rate": 0.1353,
+        "net_profit": -197.43,
+        "profit_factor": 0.42,
+        "max_drawdown": 204.57,
+        "avg_ticks_held": 47.7,
+        "timeout_ratio": 0.0048,
+        "spike_capture_ratio": 0.4589,
+        "loss_streak": 21,
+        "score": 47.7
     },
     "top10_stage2": [
         {
             "rank": 1,
-            "score": 31.69,
+            "score": 59.75,
             "params": {
-                "spike_threshold": 3.0,
-                "rsi_oversold": 35,
+                "spike_threshold": 2.5,
+                "rsi_oversold": 28,
                 "rsi_overbought": 58,
                 "squeeze_threshold": 0.75,
                 "zscore_entry": 0.8,
                 "exit_ticks": 120,
-                "stop_loss_points": 4.0,
-                "take_profit_points": 20.0
+                "stop_loss_points": 2.5,
+                "take_profit_points": 20.0,
+                "cooldown_ticks": 60,
+                "cycle_early_zone": 0.15,
+                "cycle_hot_zone": 0.6,
+                "cycle_max_lot_scale": 2.5
             }
         },
         {
             "rank": 2,
-            "score": 31.69,
+            "score": 59.75,
             "params": {
-                "spike_threshold": 3.0,
-                "rsi_oversold": 35,
+                "spike_threshold": 2.5,
+                "rsi_oversold": 28,
                 "rsi_overbought": 65,
                 "squeeze_threshold": 0.75,
                 "zscore_entry": 0.8,
                 "exit_ticks": 120,
-                "stop_loss_points": 4.0,
-                "take_profit_points": 20.0
+                "stop_loss_points": 2.5,
+                "take_profit_points": 20.0,
+                "cooldown_ticks": 60,
+                "cycle_early_zone": 0.15,
+                "cycle_hot_zone": 0.6,
+                "cycle_max_lot_scale": 2.5
             }
         },
         {
             "rank": 3,
-            "score": 31.67,
+            "score": 59.75,
             "params": {
-                "spike_threshold": 3.0,
-                "rsi_oversold": 35,
-                "rsi_overbought": 58,
-                "squeeze_threshold": 0.87,
+                "spike_threshold": 2.5,
+                "rsi_oversold": 28,
+                "rsi_overbought": 72,
+                "squeeze_threshold": 0.75,
                 "zscore_entry": 0.8,
                 "exit_ticks": 120,
-                "stop_loss_points": 4.0,
-                "take_profit_points": 20.0
+                "stop_loss_points": 2.5,
+                "take_profit_points": 20.0,
+                "cooldown_ticks": 60,
+                "cycle_early_zone": 0.15,
+                "cycle_hot_zone": 0.6,
+                "cycle_max_lot_scale": 2.5
             }
         },
         {
             "rank": 4,
-            "score": 31.67,
+            "score": 59.74,
             "params": {
-                "spike_threshold": 3.0,
-                "rsi_oversold": 35,
-                "rsi_overbought": 65,
+                "spike_threshold": 2.5,
+                "rsi_oversold": 28,
+                "rsi_overbought": 58,
                 "squeeze_threshold": 0.87,
                 "zscore_entry": 0.8,
                 "exit_ticks": 120,
-                "stop_loss_points": 4.0,
-                "take_profit_points": 20.0
+                "stop_loss_points": 2.5,
+                "take_profit_points": 20.0,
+                "cooldown_ticks": 60,
+                "cycle_early_zone": 0.15,
+                "cycle_hot_zone": 0.6,
+                "cycle_max_lot_scale": 2.5
             }
         },
         {
             "rank": 5,
-            "score": 30.9,
+            "score": 59.74,
             "params": {
-                "spike_threshold": 3.0,
-                "rsi_oversold": 35,
-                "rsi_overbought": 58,
-                "squeeze_threshold": 0.75,
-                "zscore_entry": 1.1,
+                "spike_threshold": 2.5,
+                "rsi_oversold": 28,
+                "rsi_overbought": 65,
+                "squeeze_threshold": 0.87,
+                "zscore_entry": 0.8,
                 "exit_ticks": 120,
-                "stop_loss_points": 4.0,
-                "take_profit_points": 20.0
+                "stop_loss_points": 2.5,
+                "take_profit_points": 20.0,
+                "cooldown_ticks": 60,
+                "cycle_early_zone": 0.15,
+                "cycle_hot_zone": 0.6,
+                "cycle_max_lot_scale": 2.5
             }
         },
         {
             "rank": 6,
-            "score": 30.9,
+            "score": 59.67,
             "params": {
-                "spike_threshold": 3.0,
-                "rsi_oversold": 35,
-                "rsi_overbought": 65,
+                "spike_threshold": 2.5,
+                "rsi_oversold": 28,
+                "rsi_overbought": 58,
                 "squeeze_threshold": 0.75,
-                "zscore_entry": 1.1,
+                "zscore_entry": 0.8,
                 "exit_ticks": 120,
-                "stop_loss_points": 4.0,
-                "take_profit_points": 20.0
+                "stop_loss_points": 2.5,
+                "take_profit_points": 20.0,
+                "cooldown_ticks": 60,
+                "cycle_early_zone": 0.15,
+                "cycle_hot_zone": 0.6,
+                "cycle_max_lot_scale": 2.0
             }
         },
         {
             "rank": 7,
-            "score": 30.9,
+            "score": 59.67,
             "params": {
-                "spike_threshold": 3.0,
-                "rsi_oversold": 35,
-                "rsi_overbought": 72,
-                "squeeze_threshold": 0.75,
-                "zscore_entry": 1.1,
+                "spike_threshold": 2.5,
+                "rsi_oversold": 28,
+                "rsi_overbought": 58,
+                "squeeze_threshold": 0.87,
+                "zscore_entry": 0.8,
                 "exit_ticks": 120,
-                "stop_loss_points": 4.0,
-                "take_profit_points": 20.0
+                "stop_loss_points": 2.5,
+                "take_profit_points": 20.0,
+                "cooldown_ticks": 60,
+                "cycle_early_zone": 0.15,
+                "cycle_hot_zone": 0.6,
+                "cycle_max_lot_scale": 2.0
             }
         },
         {
             "rank": 8,
-            "score": 30.88,
+            "score": 59.67,
             "params": {
-                "spike_threshold": 3.0,
-                "rsi_oversold": 35,
-                "rsi_overbought": 58,
-                "squeeze_threshold": 0.87,
-                "zscore_entry": 1.1,
+                "spike_threshold": 2.5,
+                "rsi_oversold": 28,
+                "rsi_overbought": 65,
+                "squeeze_threshold": 0.75,
+                "zscore_entry": 0.8,
                 "exit_ticks": 120,
-                "stop_loss_points": 4.0,
-                "take_profit_points": 20.0
+                "stop_loss_points": 2.5,
+                "take_profit_points": 20.0,
+                "cooldown_ticks": 60,
+                "cycle_early_zone": 0.15,
+                "cycle_hot_zone": 0.6,
+                "cycle_max_lot_scale": 2.0
             }
         },
         {
             "rank": 9,
-            "score": 30.88,
+            "score": 59.67,
             "params": {
-                "spike_threshold": 3.0,
-                "rsi_oversold": 35,
+                "spike_threshold": 2.5,
+                "rsi_oversold": 28,
                 "rsi_overbought": 65,
                 "squeeze_threshold": 0.87,
-                "zscore_entry": 1.1,
+                "zscore_entry": 0.8,
                 "exit_ticks": 120,
-                "stop_loss_points": 4.0,
-                "take_profit_points": 20.0
+                "stop_loss_points": 2.5,
+                "take_profit_points": 20.0,
+                "cooldown_ticks": 60,
+                "cycle_early_zone": 0.15,
+                "cycle_hot_zone": 0.6,
+                "cycle_max_lot_scale": 2.0
             }
         },
         {
             "rank": 10,
-            "score": 30.88,
+            "score": 59.67,
             "params": {
-                "spike_threshold": 3.0,
-                "rsi_oversold": 35,
+                "spike_threshold": 2.5,
+                "rsi_oversold": 28,
                 "rsi_overbought": 72,
-                "squeeze_threshold": 0.87,
-                "zscore_entry": 1.1,
+                "squeeze_threshold": 0.75,
+                "zscore_entry": 0.8,
                 "exit_ticks": 120,
-                "stop_loss_points": 4.0,
-                "take_profit_points": 20.0
+                "stop_loss_points": 2.5,
+                "take_profit_points": 20.0,
+                "cooldown_ticks": 60,
+                "cycle_early_zone": 0.15,
+                "cycle_hot_zone": 0.6,
+                "cycle_max_lot_scale": 2.0
             }
         }
     ]

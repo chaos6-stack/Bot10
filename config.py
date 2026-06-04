@@ -27,17 +27,17 @@ BOOM_EXIT_TICKS = 120
 CRASH_EXIT_TICKS = 120
 
 # --- STOP LOSS / TAKE PROFIT (in price points) ---
-STOP_LOSS_POINTS = 4.0
+STOP_LOSS_POINTS = 2.5
 TAKE_PROFIT_POINTS = 20.0
 
 # --- BASELINE SPIKE STRATEGY HYPERPARAMETERS ---
 TICK_WINDOW_SIZE = 50
 VOLATILITY_COMPRESSION_WINDOW = 20
 VOLATILITY_BOLLINGER_DEV = 1.5
-SPIKE_THRESHOLD_FACTOR = 3.0
+SPIKE_THRESHOLD_FACTOR = 2.5
 
 # --- ENTRY FILTER THRESHOLDS ---
-RSI_OVERSOLD = 35
+RSI_OVERSOLD = 28
 RSI_OVERBOUGHT = 58
 SQUEEZE_THRESHOLD = 0.75
 ZSCORE_ENTRY = 0.8
@@ -56,18 +56,18 @@ ZSCORE_ENTRY = 0.8
 #   OVERDUE   > 1.00                    Past expected cycle point. Enter
 #                                        even without other confirmations.
 SPIKE_CYCLE_LENGTH = 1000       # ticks between spikes (matches index name)
-CYCLE_EARLY_ZONE = 0.25         # recovery zone ends at 25% of cycle
-CYCLE_HOT_ZONE = 0.70           # hot zone begins at 70% of cycle
+CYCLE_EARLY_ZONE = 0.15  # recovery zone ends at 25% of cycle
+CYCLE_HOT_ZONE = 0.6  # hot zone begins at 70% of cycle
 
 # Lot size scaling when a spike is overdue (CYCLE_LOT_SCALING must be True).
 # At cycle_multiplier = 2.0 (furthest overdue) lot size = DEFAULT_LOT_SIZE * 2.0
 CYCLE_LOT_SCALING = True
-CYCLE_MAX_LOT_SCALE = 2.0
+CYCLE_MAX_LOT_SCALE = 2.5
 
 # --- POST-TRADE COOLDOWN ---
 # Minimum ticks to wait after any trade closes before opening a new one.
 # Prevents chasing the same downtrend immediately after a timeout loss.
-POST_TRADE_COOLDOWN_TICKS = 40
+POST_TRADE_COOLDOWN_TICKS = 60
 
 # --- RISK MANAGEMENT LIMITS ---
 MAX_DAILY_LOSS = 50.0
